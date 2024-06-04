@@ -27,6 +27,8 @@ interface CreateTopicFormState {
 }
 
 export async function createTopic(formState: CreateTopicFormState, formData: FormData): Promise<CreateTopicFormState> {
+
+  
   const result = createTopicSchema.safeParse({
     name: formData.get("name"),
     description: formData.get("description"),
@@ -42,8 +44,9 @@ export async function createTopic(formState: CreateTopicFormState, formData: For
   }
 
   if (!result.success) {
+    console.log("errors", result.error.flatten().fieldErrors)
     return {
-      errors: result.error.flatten().fieldErrors,
+      errors: result.error.flatten().fieldErrors,// flatten().fieldErrors is from zod
     }
   }
 
