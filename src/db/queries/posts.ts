@@ -1,5 +1,5 @@
-import type { Post } from '@prisma/client'
-import { db } from '..';
+import type { Post } from "@prisma/client";
+import { db } from "..";
 
 export type PostWithData = (
   Post & {
@@ -9,15 +9,18 @@ export type PostWithData = (
   }
 )
 
-export function fetchPostsByTopicSlug(slug: string):Promise<PostWithData[]> {
+// export type PostWithData = Awaited<
+//   ReturnType<typeof fetchPostsByTopicSlug>
+// >[number];
+
+export function fetchPostsByTopicSlug(slug: string): Promise<PostWithData[]> {
   return db.post.findMany({
-    where: {topic: { slug }},
-    include:{
-      topic: { select: {slug: true}},
-      user: { select: {name: true}},
-      _count: { select: {comments: true}},
+    where: { topic: { slug } },
+    include: {
+      topic: { select: { slug: true } },
+      user: { select: { name: true } },
+      _count: { select: { comments: true } },
     },
-    orderBy: { createdAt: 'desc'}
-  })
-  
+    orderBy: { createdAt: "desc" },
+  });
 }
