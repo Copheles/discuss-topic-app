@@ -4,7 +4,6 @@ import { fetchCommentsByPostId } from '@/db/queries/comments'
 
 interface CommentShowProps {
   commentId: string;
-  // comments: CommentWithAuthor[]
   postId: string
 }
 
