@@ -24,7 +24,6 @@ export default function Header() {
           </Suspense>
         </NavbarItem>
       </NavbarContent>
-
       <NavbarContent justify="end">
         <HeaderAuth />
       </NavbarContent>

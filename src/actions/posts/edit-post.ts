@@ -1,19 +1,20 @@
 'use server';
 
 import type { Post } from '@prisma/client';
-import {revalidatePath } from 'next/cache'
+import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
-import { z } from 'zod'
-import { auth } from '@/auth'
-import { db } from '@/db'
+import { z } from 'zod';
+import { auth } from '@/auth';
+import { db } from '@/db';
 import paths from '@/paths'
 
-const createPostSchema = z.object({
+
+const editPostSchema = z.object({
   title: z.string().min(3),
   content: z.string().min(10)
-});
+})
 
-interface CreatePostFormState {
+interface EditPostFormState {
   errors: {
     title?: string[],
     content?: string[],
@@ -21,35 +22,30 @@ interface CreatePostFormState {
   }
 }
 
-
-export async function createPost(slug:string, formState: CreatePostFormState, formData: FormData): Promise<CreatePostFormState>{
+export async function editPost(post: Post, formState: EditPostFormState, formData: FormData): Promise<EditPostFormState>{
 
   const session = await auth();
+
   if(!session || !session.user){
     return {
       errors: {
-        _form: ['You must be signed in to do this!']
+        _form: ['You must be signed in to do this']
       }
     }
   }
 
-  const topic = await db.topic.findFirst({
-    where: { slug }
-  })
-
-  if(!topic){
+  if(session.user.id !== post.userId){
     return {
       errors: {
-        _form: ['Can not find topic']
+        _form: ['You are not authorized to do this']
       }
     }
   }
 
-  const result = createPostSchema.safeParse({
+  const result = editPostSchema.safeParse({
     title: formData.get('title'),
     content: formData.get('content')
   })
-
 
   if(!result.success){
     return {
@@ -57,19 +53,19 @@ export async function createPost(slug:string, formState: CreatePostFormState, fo
     }
   }
 
-  let post: Post;
+  let updatedPost: Post
 
   try{
-    post = await db.post.create({
-      data:{
+    updatedPost = await db.post.update({
+      where: {
+        id: post.id
+      },
+      data: {
         title: result.data.title,
         content: result.data.content,
-        userId: session.user.id,
-        topicId: topic.id
-      }
+      },
     })
 
-    console.log(post)
   }catch(err: unknown){
     if(err instanceof Error){
       return {
@@ -80,14 +76,15 @@ export async function createPost(slug:string, formState: CreatePostFormState, fo
     }else{
       return {
         errors: {
-          _form: ['Failed to create post']
+          _form: ['Failed to edit post']
         }
       }
     }
   }
 
-  // TODO: revalidate the topic show page after creating a post
-  revalidatePath(paths.topicShow(slug))
-  redirect(paths.postShow(slug, post.id))
+  return {
+    errors:{}
+  }
+
 }
 
